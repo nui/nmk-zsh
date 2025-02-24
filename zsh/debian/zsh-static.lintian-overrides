@@ -1,0 +1,5 @@
+zsh-static: embedded-library ncurses [usr/bin/zsh-static]
+# Migration wrapper which is not meant to be used
+zsh-static: no-manual-page [usr/bin/zsh5-static]
+# I won't fix that as I disagree. Add an override to show my disagreeing
+zsh-static: debian-news-entry-uses-asterisk

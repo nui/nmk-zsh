@@ -1,0 +1,104 @@
+Description: Use /usr/bin/pager instead of more by default
+ Similar issue as with https://bugs.debian.org/993539, just for a
+ different setting. Replaces the according sed call in debian/rules.
+Bug-Debian: https://bugs.debian.org/993539
+Forwarded: not-needed
+Author: Axel Beckert <abe@debian.org>
+
+--- a/Completion/Base/Widget/_complete_debug
++++ b/Completion/Base/Widget/_complete_debug
+@@ -28,7 +28,7 @@
+ 
+   if (( debug_fd != -1 )); then
+     zstyle -s ':completion:complete-debug::::' pager pager
+-    print -sR "${pager:-${PAGER:-${VISUAL:-${EDITOR:-more}}}} ${(q)tmp} ;: $w"
++    print -sR "${pager:-${PAGER:-${VISUAL:-${EDITOR:-/usr/bin/pager}}}} ${(q)tmp} ;: $w"
+     _message -r "Trace output left in $tmp (up-history to view)"
+     if [[ $compstate[nmatches] -le 1 && $compstate[list] != *force* ]]; then
+         compstate[list]='list force messages'
+--- a/Functions/MIME/zsh-mime-handler
++++ b/Functions/MIME/zsh-mime-handler
+@@ -288,11 +288,11 @@
+   # We need to page the output.
+   # Careful in case PAGER is a set of commands and arguments.
+   local -a pager
+-  zsh-mime-contexts -a $suffix pager pager || pager=(${=PAGER:-more})
++  zsh-mime-contexts -a $suffix pager pager || pager=(${=PAGER:-/usr/bin/pager})
+   if [[ -n $stdin ]]; then
+     cat $argv | $execargs | $pager
+   else
+-    $execargs | eval ${PAGER:-more}
++    $execargs | eval ${PAGER:-/usr/bin/pager}
+   fi
+ elif [[ $no_bg = yes || $flags = *needsterminal* || -z $DISPLAY ]]; then
+   # Needs a terminal, so run synchronously.
+--- a/Functions/Misc/mere
++++ b/Functions/Misc/mere
+@@ -86,4 +86,4 @@
+   fi |
+   nroff -T$terminal -man | $col -x
+ ) |
+-${=MANPAGER:-${PAGER:-more}} -s
++${=MANPAGER:-${PAGER:-/usr/bin/pager}} -s
+--- a/Functions/Misc/nslookup
++++ b/Functions/Misc/nslookup
+@@ -21,7 +21,7 @@
+ zstyle -s ':nslookup' prompt tmp && pmpt=(-p "$tmp")
+ zstyle -s ':nslookup' rprompt tmp && pmpt=("$pmpt[@]" -r "$tmp")
+ zstyle -s ':nslookup' pager tmp &&
+-    [[ -z "$pager" ]] && pager="${opager:-more}"
++    [[ -z "$pager" ]] && pager="${opager:-/usr/bin/pager}"
+ (( $#pmpt )) || pmpt=(-p '> ')
+ 
+ zpty nslookup command nslookup "${(q)@}"
+--- a/Functions/Misc/run-help
++++ b/Functions/Misc/run-help
+@@ -29,7 +29,7 @@
+     return 0
+ elif [[ -n "${HELPDIR:-}" && -r $HELPDIR/$1 && $1 != compctl ]]
+ then
+-    ${=PAGER:-more} $HELPDIR/$1
++    ${=PAGER:-/usr/bin/pager} $HELPDIR/$1
+     return $?
+ fi
+ 
+@@ -69,7 +69,7 @@
+ 	(comp*) man zshcompsys;;
+ 	(zf*) man zshftpsys;;
+ 	(run-help) man zshcontrib;;
+-	(*) builtin functions ${what[(w)1]} | ${=PAGER:-more};;
++	(*) builtin functions ${what[(w)1]} | ${=PAGER:-/usr/bin/pager};;
+ 	esac;;
+     (*( is a * builtin))
+ 	case ${what[(w)1]} in
+--- a/Functions/Misc/run-help-svk
++++ b/Functions/Misc/run-help-svk
+@@ -1,1 +1,1 @@
+-svk help $1 | ${=PAGER:-more}
++svk help $1 | ${=PAGER:-/usr/bin/pager}
+--- a/Functions/Misc/run-help-svn
++++ b/Functions/Misc/run-help-svn
+@@ -1,1 +1,1 @@
+-svn help $1 | ${=PAGER:-more}
++svn help $1 | ${=PAGER:-/usr/bin/pager}
+--- a/Functions/Zftp/zfdir
++++ b/Functions/Zftp/zfdir
+@@ -95,15 +95,15 @@
+ fi
+ 
+ if [[ -n $file && -f $file ]]; then
+-  eval ${PAGER:-more} \$file
++  eval ${PAGER:-/usr/bin/pager} \$file
+ else
+   if (zftp test); then
+     # Works OK in subshells
+-    zftp dir $* | tee $file | eval ${PAGER:-more}
++    zftp dir $* | tee $file | eval ${PAGER:-/usr/bin/pager}
+   else
+     # Doesn't work in subshells (IRIX 6.2 --- why?)
+     zftp dir $* >$file
+-    eval ${PAGER:-more} $file
++    eval ${PAGER:-/usr/bin/pager} $file
+   fi
+ fi
+ # }

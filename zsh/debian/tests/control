@@ -1,0 +1,22 @@
+Tests: run-testsuite
+Depends: libcap-dev [linux-any],
+         libelf-dev,
+         libgdbm-dev,
+         libncurses-dev,
+         libpcre2-dev,
+         zsh,
+         zsh-dev
+
+Tests: run-testsuite-static
+Depends: libcap-dev [linux-any],
+         libelf-dev,
+         libgdbm-dev,
+         libncurses-dev,
+         libpcre2-dev,
+         zsh-static,
+         zsh-dev
+
+Tests: adequate
+Depends: adequate:native,
+         @
+Restrictions: superficial

@@ -1,0 +1,168 @@
+#!/usr/bin/make -f
+INSTALL = install
+INSTALL_PROGRAM = $(INSTALL) -p -m 755
+
+export DEB_BUILD_MAINT_OPTIONS=hardening=+all
+
+DPKG_EXPORT_BUILDFLAGS = 1
+include /usr/share/dpkg/buildflags.mk
+include /usr/share/dpkg/architecture.mk
+include /usr/share/dpkg/pkg-info.mk
+H_LDFLAGS = $(LDFLAGS)
+
+VENDOR=$(shell dpkg-vendor --query vendor | env LC_ALL=C tr A-Z a-z | env LC_ALL=C tr -d -c '[:alnum:]')
+
+CFLAGS += -Wall -g
+
+CONFIGFLAGS =  --prefix=/usr
+CONFIGFLAGS += --mandir=/usr/share/man
+CONFIGFLAGS += LDFLAGS="-g $(H_LDFLAGS)"
+
+CONFIGFLAGS += --infodir=/usr/share/info
+CONFIGFLAGS += --enable-maildir-support
+CONFIGFLAGS += --enable-max-jobtable-size=256
+CONFIGFLAGS += --enable-etcdir=/etc/zsh
+CONFIGFLAGS += --enable-function-subdirs
+CONFIGFLAGS += --enable-site-fndir=/usr/local/share/zsh/site-functions
+CONFIGFLAGS += --enable-fndir=/usr/share/zsh/functions
+CONFIGFLAGS += --enable-runhelpdir=/usr/share/zsh/help
+CONFIGFLAGS += --with-tcsetpgrp
+CONFIGFLAGS += --enable-gdbm
+CONFIGFLAGS += --with-term-lib="ncursesw tinfo"
+CONFIGFLAGS += --enable-cap --enable-pcre
+CONFIGFLAGS += --enable-readnullcmd=pager
+CONFIGFLAGS += --enable-custom-patchlevel=$(VENDOR)/$(DEB_VERSION)
+CONFIGFLAGS += --enable-additional-fpath=/usr/share/zsh/vendor-functions,/usr/share/zsh/vendor-completions
+CONFIGFLAGS += --disable-ansi2knr
+
+STATICFLAGS =  --disable-dynamic
+STATICFLAGS += --enable-ldflags=-static
+STATICFLAGS += --disable-dynamic-nss
+
+ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
+CONFIGFLAGS += --enable-zsh-debug
+CONFIGFLAGS += --enable-zsh-mem-debug
+CONFIGFLAGS += --enable-zsh-mem-warning
+CONFIGFLAGS += --enable-zsh-secure-free
+CONFIGFLAGS += --enable-zsh-hash-debug
+endif
+
+# We first need to check if the package is installed, otherwise the
+# resulting syntax might be invalid. Needed for packages which are
+# also provided by other packages like libncurses-dev and
+# libncursesw5-dev which both fulfil the according build-dependency.
+BUILT_USING=$(shell for pkg in libcap-dev libncurses-dev libpcre2-dev libc-dev-bin; do dpkg-query -f '$${status}' -W $$pkg 2>&1 | grep -Fq installed && dpkg-query -f '$${source:Package} (= $${source:Version}), ' -W $$pkg; done)
+
+%:
+	dh $@
+
+override_dh_auto_build-arch: build-dynamic build-static
+build-dynamic:
+	dh_auto_build -B obj
+build-static:
+	dh_auto_build -B obj-static
+
+override_dh_auto_build-indep:
+	dh_auto_build -B obj -- pdf
+	dh_auto_build -B obj/Etc # FAQ
+
+override_dh_auto_test-arch:
+	if dpkg-architecture -qDEB_BUILD_ARCH_OS | grep -qv hurd; then \
+		HOME="$(CURDIR)/obj/testhome" ZTST_verbose=1 dh_auto_test -B obj; \
+	fi
+	HOME="$(CURDIR)/obj-static/testhome" ZTST_verbose=1 dh_auto_test -B obj-static || true
+
+override_dh_auto_test-indep:
+
+override_dh_auto_configure:
+	chmod 755 configure
+	mkdir -p obj/testhome obj-static/testhome
+	dh_auto_configure -B obj -- $(CONFIGFLAGS)
+	dh_auto_configure -B obj-static -- $(CONFIGFLAGS) $(STATICFLAGS)
+
+	sed -e 's/#define VENDOR "pc"/#define VENDOR "$(VENDOR)"/' \
+	    -i obj/config.h obj-static/config.h
+	sed -e 's/files.mdd link=no/files.mdd link=static/;s/stat.mdd link=no/stat.mdd link=static/' \
+	    -i obj-static/config.modules
+
+override_dh_auto_clean:
+	dh_auto_clean -B obj
+	dh_auto_clean -B obj-static
+
+override_dh_installdocs-indep:
+	dh_installdocs -pzsh-doc --link-doc=zsh-common --doc-main-package=zsh-common
+	dh_installdocs -pzsh-common
+
+# Needs a freshly built (arch-dependent) zsh executable to compile .zwc files
+override_dh_auto_install-indep: build-dynamic
+	cd obj && $(MAKE) install.man DESTDIR=$(CURDIR)/debian/zsh-common
+	perl $(CURDIR)/Util/helpfiles obj/Doc/zshbuiltins.1 debian/zsh-common/usr/share/zsh/help
+
+	cd obj && $(MAKE) install.fns DESTDIR=$(CURDIR)/debian/zsh-common
+
+# move this to a non-root section; also drop it for cross-compiles
+ifeq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
+	awk '/^#define FPATH_DIR/     { head=$$3;       gsub(/"/,"",head); };        \
+             /^#define FPATH_SUBDIRS/ { $$1=""; $$2=""; gsub(/[" ]/,""); tail=$$0; } \
+             END                      { printf "%s/%s\n", head, tail; };'            \
+	    obj/Src/zshpaths.h >obj/Src/zshpaths.temp
+	obj/Src/zsh -fc \
+            'setopt extendedglob; \
+	     for i in debian/zsh-common/'`cat obj/Src/zshpaths.temp`'; do \
+		 zcompile -U -M $$i.zwc $$i/*~*.zwc(^/);                  \
+		 chmod 644 $$i.zwc;                                       \
+	     done'
+endif
+
+# Docs: Info + HTML
+	cd obj && $(MAKE) install.info install.html \
+	    DESTDIR=$(CURDIR)/debian/zsh-doc htmldir=/usr/share/doc/zsh-common/html
+	rm -f debian/zsh-doc/usr/share/info/dir*
+
+# Work around texi2html unfriendliness
+	sed -i -e 's/<BODY.*>/<BODY LANG="EN">/' debian/zsh-doc/usr/share/doc/zsh-common/html/*.html
+
+override_dh_installexamples-indep:
+	dh_installexamples -pzsh-common -X.distfiles
+	cd debian/zsh-common/usr/share/doc/zsh-common/examples/; mv Example Functions
+	sed -i -e '1!b;s:^#!.*[ /]zsh:#!/bin/zsh:;s#/usr/local/bin#/usr/bin#' \
+	   debian/zsh-common/usr/share/doc/zsh-common/examples/Misc/*
+
+execute_after_dh_install-indep:
+# Doesn't this need to go before we zcompile stuff into .zwc files? -- Axel
+	sed -i -e '1!b;s:^#!.*[ /]zsh:#!/bin/zsh:;s#/usr/local/bin#/usr/bin#;' \
+		`find debian/zsh-common/usr/share/zsh/functions -type f`
+
+override_dh_compress-indep:
+	dh_compress -i -Xpdf
+
+override_dh_auto_install-arch:
+	cd obj && $(MAKE) install.bin install.modules \
+	    DESTDIR=$(CURDIR)/debian/zsh INSTALL_PROGRAM='$(INSTALL_PROGRAM)'
+	rm debian/zsh/usr/bin/zsh-5.[0-9]*
+
+override_dh_shlibdeps-arch:
+	dh_shlibdeps -pzsh -- \
+		-dDepends    debian/zsh/usr/bin/*   \
+		-dRecommends debian/zsh/usr/lib/*/zsh/*/zsh/*.so
+
+execute_after_dh_installdocs-arch:
+	awk 'BEGIN { print "The following modules are statically-compiled into the static zsh binary:\n"; } /link=static/ { printf "%s (%s %s)\n", substr($$1,6), $$4, $$5; }' obj-static/config.modules >debian/zsh-static/usr/share/doc/zsh-static/README.Debian
+
+execute_after_dh_install-arch:
+	mv debian/zsh-static/usr/bin/zsh  debian/zsh-static/usr/bin/zsh-static
+	mv debian/zsh-static/usr/bin/zsh5 debian/zsh-static/usr/bin/zsh5-static
+	sed -e 's:#!/bin/zsh:#!/bin/zsh-static:' -i debian/zsh-static/usr/bin/zsh5-static
+
+	find debian/zsh-dev/usr/include/zsh -name '*.h' -o -name '*.mdh' | \
+	  xargs sed -e 's@\.\./config\.h@config.h@;s@#\(\s*\)include "\([^"]\+\)"@#\1include <zsh/\2>@' -i
+
+	cd debian/zsh-dev/usr/share/aclocal; mv aczshoot.m4 zshoot.m4
+
+override_dh_gencontrol-arch:
+	dh_gencontrol -a -- -VBuilt-Using="$(BUILT_USING)"
+
+restore-cleaned-files:
+	git status --porcelain | egrep '^ D ' | cut -c4- | xargs --no-run-if-empty git checkout
+
+.PHONY: restore-cleaned-files

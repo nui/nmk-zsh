@@ -1,0 +1,36 @@
+From 727b493e2b782fca0f3933865faa9a0a6ab1a2c4 Mon Sep 17 00:00:00 2001
+From: Wesley Schwengle <wesleys@opperschaap.net>
+Date: Mon, 17 Oct 2022 13:13:13 +0900
+Subject: [PATCH] 50736: silence use-after-free warning (gcc-12.2)
+
+--- a/Src/Zle/compmatch.c
++++ b/Src/Zle/compmatch.c
+@@ -2045,12 +2045,12 @@
+ 				zlelineasstring(line, mp->llen, 0, &convlen,
+ 						NULL, 0);
+ 			    if (rr <= convlen) {
+-				char *or = rs;
++				ptrdiff_t diff = rp - rs;
+ 				int alloclen = (convlen > 20) ? convlen : 20;
+ 
+ 				rs = realloc(rs, (rl += alloclen));
+ 				rr += alloclen;
+-				rp += rs - or;
++				rp = rs + diff;
+ 			    }
+ 			    memcpy(rp, convstr, convlen);
+ 			    rp += convlen;
+@@ -2073,11 +2073,11 @@
+ 	} else {
+ 	    /* Same character, just take it. */
+ 	    if (rr <= 1 /* HERE charlen */) {
+-		char *or = rs;
++		ptrdiff_t diff = rp - rs;
+ 
+ 		rs = realloc(rs, (rl += 20));
+ 		rr += 20;
+-		rp += rs - or;
++		rp = rs + diff;
+ 	    }
+ 	    /* HERE: multibyte char */
+ 	    *rp++ = *sa;

@@ -1,0 +1,16 @@
+further-mitigate-test-suite-hangs.patch
+update-debian-sections.patch
+cross-compile.diff
+example-shebang.patch
+completion-dscverify.diff
+use-pager-instead-of-more-by-default.patch
+fix-typos-in-man-pages.patch
+cherry-pick-3e3cfabc-revert-38150-and-fix-in-calling-function-cfp_matcher_range-instead.patch
+cherry-pick-4b7a9fd0-additional-typset--p--m-fix-for-namespaces.patch
+cherry-pick-b62e91134-51723-migrate-pcre-module-to-pcre2.patch
+cherry-pick-10bdbd8b-51877-do-not-build-pcre-module-if-pcre2-config-is-not-found.patch
+cherry-pick-ecd3f9c9-1057610-support-texinfo-7.0.patch
+cherry-pick-4c89849c-50641-use-int-main-in-test-C-codes-in-configure.patch
+cherry-pick-ab4d62eb-52383-Avoid-incompatible-pointer-types-in-terminfo-global.patch
+cherry-pick-0bb140f9-52999-import-OLDPWD-from-environment-if-set.patch
+cherry-pick-727b493e-50736-silence-use-after-free-warning.patch

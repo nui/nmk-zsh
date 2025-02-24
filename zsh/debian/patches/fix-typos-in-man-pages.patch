@@ -1,0 +1,26 @@
+Description: Fix two typos in man pages found by Lintian
+Author: Axel Beckert <abe@debian.org>
+Origin: commit 361de369edd3bd17066b5f72e056e487545b364e
+
+--- a/Doc/Zsh/builtins.yo
++++ b/Doc/Zsh/builtins.yo
+@@ -1936,7 +1936,7 @@
+ 
+ For each var(name)tt(=)var(value) assignment, the parameter
+ var(name) is set to var(value).  If the assignment is omitted and var(name)
+-does em(not) refer to an existing parameter, a new parameter is intialized
++does em(not) refer to an existing parameter, a new parameter is initialized
+ to empty string, zero, or empty array (as appropriate), em(unless) the
+ shell option tt(TYPESET_TO_UNSET) is set.  When that option is set,
+ the parameter attributes are recorded but the parameter remains unset.
+--- a/Doc/Zsh/options.yo
++++ b/Doc/Zsh/options.yo
+@@ -1952,7 +1952,7 @@
+ item(tt(TYPESET_TO_UNSET) <K> <S>)(
+ When declaring a new parameter with any of the `tt(typeset)' family of
+ related commands, the parameter remains unset unless and until a
+-value is explicity assigned to it, either in the `tt(typeset)' command
++value is explicitly assigned to it, either in the `tt(typeset)' command
+ itself or as a later assignment statement.
+ )
+ pindex(VERBOSE)

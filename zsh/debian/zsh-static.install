@@ -1,0 +1,3 @@
+debian/zsh5 usr/bin
+obj-static/Src/zsh usr/bin
+debian/shells.d/zsh-static usr/share/debianutils/shells.d/

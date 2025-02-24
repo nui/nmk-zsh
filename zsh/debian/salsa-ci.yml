@@ -1,0 +1,13 @@
+include:
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/salsa-ci.yml
+  - https://salsa.debian.org/salsa-ci-team/pipeline/raw/master/pipeline-jobs.yml
+
+variables:
+  # Too many false positives on test suite stuff and when linking statically
+  SALSA_CI_DISABLE_BLHC: 1
+
+reprotest:
+  # Works fine for me locally with "reprotest --variations=-kernel",
+  # but FTBFS with reprotest on Salsa CI with this error:
+  # curses_keys.h:93:15: error: ‘KEY_EVENT’ undeclared here (not in a function); did you mean ‘KEY_RESET’?
+  allow_failure: true

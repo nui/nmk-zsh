@@ -1,0 +1,12 @@
+Description: Change shebang path in example script to Debian's zsh path
+Author: Axel Beckert <abe@debian.org>
+Forwarded: not-needed
+
+--- a/Util/reporter
++++ b/Util/reporter
+@@ -1,4 +1,4 @@
+-#!/usr/local/bin/zsh
++#!/bin/zsh
+ #
+ # NAME:
+ #	reporter

@@ -1,0 +1,6 @@
+/usr/bin/zsh /usr/bin/rzsh
+/usr/share/doc/zsh-common /usr/share/doc/zsh/doc
+/usr/share/doc/zsh-common/NEWS.gz /usr/share/doc/zsh/NEWS.gz
+/usr/share/doc/zsh-common/README.Debian /usr/share/doc/zsh/README.Debian
+/usr/share/doc/zsh-common/examples /usr/share/doc/zsh/examples
+/usr/share/man/man1/zsh.1.gz /usr/share/man/man1/rzsh.1.gz

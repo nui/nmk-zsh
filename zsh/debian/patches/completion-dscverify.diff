@@ -1,0 +1,40 @@
+Description: Add completion for dscverify(1) from Debian's devscripts.
+Author: Romain Porte <debian@microjoe.org>
+Reviewed-by: Daniel Shahaf <danielsh@apache.org>
+Bug-Debian: https://bugs.debian.org/953389
+Forwarded: https://www.zsh.org/mla/workers/2020/msg00350.html
+Applied-Upstream: master, https://sourceforge.net/p/zsh/code/ci/0d7f888945bd487d6458807684883b22dc3b31b8/#diff-1
+Last-Update: 2020-03-21
+--- a/Completion/Debian/Command/_dscverify
++++ b/Completion/Debian/Command/_dscverify
+@@ -0,0 +1,30 @@
++#compdef dscverify
++
++# $ dscverify --version
++# This is dscverify, from the Debian devscripts package, version 2.20.2
++# ...
++
++_dscverify() {
++  local all_opts=(
++    '--help[show the help message and exit]'
++    '--version[show the version + copyright and exit]'
++    '--no-default-keyrings[do not check against the default keyrings]'
++    '*--keyring[add keyring to the list of keyrings used]:keyring:_files -g "*.{kbx,gpg}(-.)"'
++    '(--nosigcheck --no-sig-check -u)'{--nosigcheck,--no-sig-check,-u}'[do not verify the GPG signature]'
++    '--verbose[do not suppress GPG output]'
++    '*:dsc file:_files -g "*.{changes,dsc,buildinfo}(-.)"'
++  )
++
++  local first_only=(
++    '(--no-conf --noconf)'{--no-conf,--noconf}'[do not read the devscripts config file]'
++  )
++
++  if (( CURRENT == 2 )); then
++    all_opts+=($first_only)
++  fi
++
++  _arguments \
++    "$all_opts[@]"
++}
++
++_dscverify "$@"

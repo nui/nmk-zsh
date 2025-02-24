@@ -1,0 +1,3 @@
+# False positive, /usr/include/zsh/config.h _is_
+# architecture-dependent, just not a binary.
+zsh-dev: package-contains-no-arch-dependent-files

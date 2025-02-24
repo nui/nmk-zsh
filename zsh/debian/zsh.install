@@ -1,0 +1,2 @@
+debian/zsh5 usr/bin
+debian/shells.d/zsh usr/share/debianutils/shells.d/
