@@ -1,4 +1,4 @@
-# nmk-tmux
+# nmk-zsh
 Zsh used in nmk-vendor
 
 # upgrade new version from debian
